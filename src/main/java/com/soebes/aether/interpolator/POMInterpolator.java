@@ -7,6 +7,7 @@ import org.apache.log4j.Logger;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
 import org.apache.maven.artifact.repository.DefaultArtifactRepository;
+import org.apache.maven.artifact.repository.MavenArtifactRepository;
 import org.apache.maven.artifact.repository.layout.DefaultRepositoryLayout;
 import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.project.DefaultProjectBuildingRequest;
@@ -14,6 +15,7 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.project.ProjectBuildingRequest.RepositoryMerging;
 import org.apache.maven.project.ProjectBuildingResult;
 import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusContainer;
@@ -71,18 +73,18 @@ public class POMInterpolator {
     }
 
     public ArtifactRepository createExtReleasesRepository() {
-        DefaultArtifactRepository repository = new DefaultArtifactRepository(
+    	MavenArtifactRepository repository = new MavenArtifactRepository(
                 "central",
                 "www.heise.de",
                 new DefaultRepositoryLayout(),
                 new ArtifactRepositoryPolicy(false, ArtifactRepositoryPolicy.UPDATE_POLICY_NEVER, ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN), //SNAPSHOT
                 new ArtifactRepositoryPolicy(true, ArtifactRepositoryPolicy.UPDATE_POLICY_DAILY, ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN)  //RELEASE
-            );
+         );
         return repository;
     }
 
     public ArtifactRepository createPluginsRepository() {
-        ArtifactRepository repository = new DefaultArtifactRepository(
+    	MavenArtifactRepository repository = new MavenArtifactRepository(
                 "plugins",
                 "www.cnn.com",
                 new DefaultRepositoryLayout(),
@@ -121,12 +123,22 @@ public class POMInterpolator {
         return getInterpolatedPom(pomFile, false);
     }
 
+    /**
+     * This will interpolate the given POM and solve the properties etc. and in this case
+     * it will solve all dependencies of this pom and download the dependencies from the
+     * repositories if needed. So this can take a while until this call will return,
+     * based on the number of  artifacts which needed to be downloaded.
+     * @param pomFile The pom you would like to interpolate.
+     * @return Interpolated MavenProject with solved dependency information.
+     * @throws ProjectBuildingException in case of an error.
+     */
     public MavenProject getInterpolatedPomWithResolvedDependencies(File pomFile) throws ProjectBuildingException {
         return getInterpolatedPom(pomFile, true);
     }
 
     private MavenProject getInterpolatedPom(File pomFile, boolean resolveDependencies) throws ProjectBuildingException {
         request.setResolveDependencies(resolveDependencies);
+        request.setRepositoryMerging(RepositoryMerging.REQUEST_DOMINANT);
         ProjectBuildingResult result = projectBuilder.build(pomFile, request);
         //TODO: Logging out result.getProblems()
         return result.getProject();

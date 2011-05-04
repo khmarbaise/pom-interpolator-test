@@ -33,8 +33,8 @@ public class Booter
         MavenRepositorySystemSession session = new MavenRepositorySystemSession();
 
         //FIXME: The local repository configuration must defined by reading the settings.xml file instead of hard coding.
-//        LocalRepository localRepo = new LocalRepository(org.apache.maven.repository.RepositorySystem.defaultUserLocalRepository);
-        LocalRepository localRepo = new LocalRepository("target/loca-repo");
+        LocalRepository localRepo = new LocalRepository(org.apache.maven.repository.RepositorySystem.defaultUserLocalRepository);
+//        LocalRepository localRepo = new LocalRepository("target/loca-repo");
         session.setLocalRepositoryManager( system.newLocalRepositoryManager( localRepo ) );
         session.setTransferListener( new ConsoleTransferListener() );
         session.setRepositoryListener( new ConsoleRepositoryListener() );
